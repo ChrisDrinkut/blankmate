@@ -1,7 +1,7 @@
-<aside id="sidebar" role="complementary">
+<aside class="sidebar" role="complementary">
 <?php if ( is_active_sidebar( 'primary-widget-area' ) ) : ?>
-<div id="primary" class="widget-area">
-<ul class="xoxo">
+<div class="widget widget--primary widget-area">
+<ul class="widget__ul--primary">
 <?php dynamic_sidebar( 'primary-widget-area' ); ?>
 </ul>
 </div>
