@@ -12,11 +12,13 @@ register_nav_menus(
 array( 'main-menu' => __( 'Main Menu', 'blankslate' ) )
 );
 }
+
 add_action( 'wp_enqueue_scripts', 'blankslate_load_scripts' );
 function blankslate_load_scripts()
 {
 wp_enqueue_script( 'jquery' );
 }
+
 add_action( 'comment_form_before', 'blankslate_enqueue_comment_reply_script' );
 function blankslate_enqueue_comment_reply_script()
 {
@@ -66,12 +68,13 @@ return $count;
 }
 }
 
-
-
+/*
+ * Remove extras from wp_head
+ */
 
 remove_action('wp_head', 'rsd_link'); // remove really simple discovery link
 remove_action('wp_head', 'wp_generator'); // remove wordpress version
-remove_action('wp_head', 'feed_links', 2); // remove rss feed links (make sure you add them in yourself if youre using feedblitz or an rss service)
+// remove_action('wp_head', 'feed_links', 2); // remove rss feed links (make sure you add them in yourself if youre using feedblitz or an rss service)
 remove_action('wp_head', 'feed_links_extra', 3); // removes all extra rss feed links
 remove_action('wp_head', 'index_rel_link'); // remove link to index page
 remove_action('wp_head', 'wlwmanifest_link'); // remove wlwmanifest.xml (needed to support windows live writer)
@@ -85,6 +88,9 @@ remove_action( 'wp_print_styles', 'print_emoji_styles' );
       
 remove_action('wp_head', 'wp_shortlink_wp_head', 10, 0); // Remove shortlink
 
+/* 
+* remove adminbar 
+*/
 
 add_action('get_header', 'remove_admin_login_header');
 function remove_admin_login_header() {
@@ -109,7 +115,7 @@ function remove_json_api () {
     // Remove oEmbed-specific JavaScript from the front-end and back-end.
     remove_action( 'wp_head', 'wp_oembed_add_host_js' );
    // Remove all embeds rewrite rules.
-   add_filter( 'rewrite_rules_array', 'disable_embeds_rewrites' );
+  // add_filter( 'rewrite_rules_array', 'disable_embeds_rewrites' );
 }
 add_action( 'after_setup_theme', 'remove_json_api' );
 /*
@@ -126,8 +132,44 @@ function disable_json_api () {
 }
 add_action( 'after_setup_theme', 'disable_json_api' );
 
+/*
+ * remove extra style tag
+ */
+
 function remove_recent_comments_style() {
     global $wp_widget_factory;
     remove_action('wp_head', array($wp_widget_factory->widgets['WP_Widget_Recent_Comments'], 'recent_comments_style'));
 }
 add_action('widgets_init', 'remove_recent_comments_style');
+
+add_action('wp_default_scripts', function ($scripts) {
+    if (!empty($scripts->registered['jquery'])) {
+        $scripts->registered['jquery']->deps = array_diff($scripts->registered['jquery']->deps, ['jquery-migrate']);
+    }
+});
+
+/**
+ * Remove query string from static resources 
+ */
+ 
+function remove_cssjs_ver( $src ) {
+    if ( strpos( $src, '?ver=' ) )
+        $src = remove_query_arg( 'ver', $src );
+    return $src;
+}
+add_filter( 'style_loader_src', 'remove_cssjs_ver', 10, 2 );
+add_filter( 'script_loader_src', 'remove_cssjs_ver', 10, 2 );
+
+/*
+ * Move jquery to footer 
+ */ 
+
+function starter_scripts() {
+    wp_deregister_script( 'jquery' );
+    wp_register_script( 'jquery', includes_url( '/js/jquery/jquery.js' ), false, NULL, true );
+    wp_enqueue_script( 'jquery' );
+
+    wp_enqueue_style( 'starter-style', get_stylesheet_uri() );
+    wp_enqueue_script( 'includes', get_template_directory_uri() . '/js/min/includes.min.js', '', '', true );
+}
+add_action( 'wp_enqueue_scripts', 'starter_scripts' );
